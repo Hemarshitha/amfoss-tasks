@@ -1,2 +1,3 @@
-Terminal-Chaos/Arrakis-dex/Eolian Caves/Entrance3/01/01L/01/02/01/02/01/Citadel$ 
+echo "dWIuY29tL2FtYW5zeCSigVmaroAnGNhbGlidXIvVGVybWluYWwtQ2hhb3MtR29kU3VpdGU=" | base64 --decode
+
 
