@@ -7,8 +7,8 @@ from telegram.ext import (Application, CommandHandler, MessageHandler, filters, 
 from docx import Document
 
 # Load Google Books API key and Bot Token from environment variables
-API_KEY = "YOUR_GOOGLE_API_KEY"
-BOT_TOKEN = "YOUR_TELEGRAM_BOT_TOKEN"
+API_KEY = "AIzaSyBQAIn4EPuGxcqXHOxFEYmPGaHiU-KLPQY"
+BOT_TOKEN = "7261212025:AAGcpo9lAxPafmgqOFyPNyVv9PTAPOjC1uA"
 
 # Global reading list
 reading_list = []
@@ -120,14 +120,11 @@ async def main():
     application.add_handler(CommandHandler("help", help_command))
 
     # Run polling
-    try:
-        await application.initialize()  # Initialize the application
-        await application.run_polling()
-    finally:
-        await application.shutdown()  # Ensure proper shutdown
+    await application.run_polling()
 
 if __name__ == '__main__':
     asyncio.run(main())
+
 
 
 
