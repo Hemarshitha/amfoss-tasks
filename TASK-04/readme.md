@@ -5,6 +5,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler)
 from docx import Document
 
+# Load Google Books API key and Bot Token from environment variables
 API_KEY = "YOUR_GOOGLE_API_KEY"
 BOT_TOKEN = "YOUR_TELEGRAM_BOT_TOKEN"
 
@@ -43,7 +44,76 @@ def respond_to_genre(update: Update, context):
         genre = update.message.text
         books = fetch_books_by_genre(genre)
         file_name = f'{genre}_books.csv'
-        with open(file_name, 'w', newline='')
+        with open(file_name, 'w', newline='') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=books[0].keys())
+            writer.writeheader()
+            writer.writerows(books)
+        context.bot.send_document(chat_id=update.message.chat_id, document=open(file_name, 'rb'))
+        context.user_data['action'] = None
+
+# Preview command
+def preview(update: Update, context):
+    update.message.reply_text("Please type the name of the book for preview.")
+    context.user_data['action'] = 'preview'
+
+def respond_to_preview(update: Update, context):
+    if context.user_data.get('action') == 'preview':
+        book_name = update.message.text
+        url = f'https://www.googleapis.com/books/v1/volumes?q={book_name}&key={API_KEY}'
+        response = requests.get(url)
+        books = response.json().get('items', [])
+        if books:
+            preview_link = books[0]['volumeInfo'].get('previewLink', 'No preview available')
+            update.message.reply_text(f'Preview: {preview_link}')
+        else:
+            update.message.reply_text('No books found!')
+        context.user_data['action'] = None
+
+# Reading list commands
+def reading_list_command(update: Update, context):
+    keyboard = [
+        [InlineKeyboardButton("Add a book", callback_data='add')],
+        [InlineKeyboardButton("Delete a book", callback_data='delete')],
+        [InlineKeyboardButton("View Reading List", callback_data='view')],
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    update.message.reply_text('Manage your reading list:', reply_markup=reply_markup)
+
+def handle_button_click(update: Update, context):
+    query = update.callback_query
+    query.answer()
+    if query.data == 'add':
+        query.message.reply_text('Type the book name to add.')
+        context.user_data['action'] = 'add_book'
+    elif query.data == 'delete':
+        query.message.reply_text('Type the book name to delete.')
+        context.user_data['action'] = 'delete_book'
+    elif query.data == 'view':
+        context.bot.send_document(chat_id=update.message.chat_id, document=open('reading_list.docx', 'rb'))
+
+# Help command
+def help_command(update: Update, context):
+    help_text = "/start - Welcome message\n/book - Search books by genre\n/preview - Preview a book\n/reading_list - Manage your reading list\n/help - List all commands"
+    update.message.reply_text(help_text)
+
+# Main function
+def main():
+    application = Application.builder().token(BOT_TOKEN).build()
+
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("book", book))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, respond_to_genre))
+    application.add_handler(CommandHandler("preview", preview))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, respond_to_preview))
+    application.add_handler(CommandHandler("reading_list", reading_list_command))
+    application.add_handler(CallbackQueryHandler(handle_button_click))
+    application.add_handler(CommandHandler("help", help_command))
+
+    application.run_polling()
+
+if __name__ == '__main__':
+    main()
+
 
 
 
