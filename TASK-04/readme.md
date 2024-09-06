@@ -1,6 +1,6 @@
+import asyncio
 import os
 import csv
-import requests
 import aiohttp
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler, DictPersistence)
@@ -106,9 +106,10 @@ async def main():
     # Enable persistence to use context.user_data
     persistence = DictPersistence()
 
+    # Initialize the application
     application = Application.builder().token(BOT_TOKEN).persistence(persistence).build()
 
-    # Add handlers here
+    # Add handlers
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("book", book))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, respond_to_genre))
@@ -118,11 +119,16 @@ async def main():
     application.add_handler(CallbackQueryHandler(handle_button_click))
     application.add_handler(CommandHandler("help", help_command))
 
-    await application.run_polling()
+    # Run polling
+    try:
+        await application.initialize()  # Initialize the application
+        await application.run_polling()
+    finally:
+        await application.shutdown()  # Ensure proper shutdown
 
 if __name__ == '__main__':
-    import asyncio
     asyncio.run(main())
+
 
 
 
